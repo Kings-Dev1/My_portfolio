@@ -1,5 +1,9 @@
 import Link from "next/link";
-import type { ReactNode, ButtonHTMLAttributes } from "react";
+import type {
+  ButtonHTMLAttributes,
+  MouseEventHandler,
+  ReactNode,
+} from "react";
 
 type ButtonVariant = "primary" | "secondary" | "outline";
 
@@ -13,6 +17,7 @@ interface BaseButtonProps {
 type ButtonAsLinkProps = BaseButtonProps & {
   href: string;
   external?: boolean;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 };
 
 type ButtonAsActionProps = BaseButtonProps &
@@ -77,6 +82,7 @@ export default function Button(props: ButtonProps) {
     const {
       href,
       external = false,
+      onClick,
       children,
       variant = "primary",
       className = "",
@@ -91,6 +97,7 @@ export default function Button(props: ButtonProps) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={onClick}
           className={styles}
         >
           {children}
@@ -100,7 +107,7 @@ export default function Button(props: ButtonProps) {
     }
 
     return (
-      <Link href={href} className={styles}>
+      <Link href={href} onClick={onClick} className={styles}>
         {children}
         {arrow && <ArrowIcon external={false} />}
       </Link>

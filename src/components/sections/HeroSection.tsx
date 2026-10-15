@@ -6,285 +6,281 @@ import Container from "@/components/layout/Container";
 import Button from "@/components/ui/Button";
 
 const phrases = [
-  "Medicine.",
-  "Artificial Intelligence.",
-  "Healthcare Innovation.",
-  "Technology.",
+"Healthcare innovation.",
+"Clinical decision support.",
+"Medical data intelligence.",
+"Medical image analysis.",
 ];
 
-function delay(ms: number) {
-  return { animationDelay: `${ms}ms` };
+export default function HeroSection() {
+const [phraseIndex, setPhraseIndex] = useState(0);
+const [displayText, setDisplayText] = useState("");
+const [isDeleting, setIsDeleting] = useState(false);
+const [isPortraitOpen, setIsPortraitOpen] = useState(false);
+
+const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+useEffect(() => {
+const currentPhrase = phrases[phraseIndex];
+
+
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  setDisplayText(currentPhrase);
+  return;
 }
 
-export default function HeroSection() {
-  const [displayText, setDisplayText] = useState("");
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+let timeout: ReturnType<typeof setTimeout>;
 
-  const photoButtonRef = useRef<HTMLButtonElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+if (!isDeleting && displayText !== currentPhrase) {
+  timeout = setTimeout(() => {
+    setDisplayText(currentPhrase.slice(0, displayText.length + 1));
+  }, 65);
+} else if (!isDeleting && displayText === currentPhrase) {
+  timeout = setTimeout(() => setIsDeleting(true), 1800);
+} else if (isDeleting && displayText.length > 0) {
+  timeout = setTimeout(() => {
+    setDisplayText(displayText.slice(0, -1));
+  }, 30);
+} else {
+  setIsDeleting(false);
+  setPhraseIndex((index) => (index + 1) % phrases.length);
+}
 
-  useEffect(() => {
-    const currentPhrase = phrases[phraseIndex];
+return () => clearTimeout(timeout);
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setDisplayText(currentPhrase);
-      return;
-    }
 
-    const isPhraseComplete = displayText === currentPhrase;
-    const typingDelay =
-      isPhraseComplete && !isDeleting ? 1600 : isDeleting ? 35 : 75;
+}, [displayText, isDeleting, phraseIndex]);
 
-    const timeout = window.setTimeout(() => {
-      if (!isDeleting && isPhraseComplete) {
-        setIsDeleting(true);
-        return;
-      }
+useEffect(() => {
+if (!isPortraitOpen) return;
 
-      if (isDeleting && displayText.length === 0) {
-        setIsDeleting(false);
-        setPhraseIndex((previous) => (previous + 1) % phrases.length);
-        return;
-      }
 
-      setDisplayText(
-        isDeleting
-          ? displayText.slice(0, -1)
-          : currentPhrase.slice(0, displayText.length + 1),
-      );
-    }, typingDelay);
+const previouslyFocusedElement = document.activeElement;
+const previousOverflow = document.body.style.overflow;
 
-    return () => window.clearTimeout(timeout);
-  }, [displayText, phraseIndex, isDeleting]);
+document.body.style.overflow = "hidden";
+closeButtonRef.current?.focus();
 
-  useEffect(() => {
-    if (!isPhotoOpen) return;
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    setIsPortraitOpen(false);
+  }
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsPhotoOpen(false);
-      }
-
-      // the close button is the only focusable thing in the dialog,
-      // so Tab just keeps focus on it
-      if (event.key === "Tab") {
-        event.preventDefault();
-        closeButtonRef.current?.focus();
-      }
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    const previousPaddingRight = document.body.style.paddingRight;
-
-    // stops the page from jumping sideways when the scrollbar disappears
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-
+  if (event.key === "Tab") {
+    event.preventDefault();
     closeButtonRef.current?.focus();
+  }
+}
 
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      document.body.style.paddingRight = previousPaddingRight;
-      photoButtonRef.current?.focus();
-    };
-  }, [isPhotoOpen]);
+window.addEventListener("keydown", handleKeyDown);
 
-  return (
-    <>
-      <section className="relative overflow-hidden bg-background py-14 transition-colors duration-300 sm:py-20 lg:py-28">
-        {/* faint dot grid that fades out toward the edges */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_at_70%_40%,black,transparent_70%)]"
-        />
+return () => {
+  document.body.style.overflow = previousOverflow;
+  window.removeEventListener("keydown", handleKeyDown);
 
-        <Container>
-          <div className="relative grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
-            {/* left: introduction */}
-            <div className="relative z-10 min-w-0">
-              <div
-                className="hero-reveal mb-7 flex items-center gap-3"
-                style={delay(0)}
-              >
-                <span className="h-px w-9 shrink-0 bg-accent" />
+  if (previouslyFocusedElement instanceof HTMLElement) {
+    previouslyFocusedElement.focus();
+  }
+};
 
-                <p className="text-xs font-medium tracking-[0.18em] text-muted uppercase sm:text-sm">
-                  Medical Graduate · Software Developer · Entrepreneur
-                </p>
-              </div>
 
-              <h1
-                className="hero-reveal text-[clamp(2.5rem,7vw,4.5rem)] leading-[1.05] font-semibold tracking-[-0.045em] text-foreground"
-                style={delay(100)}
-              >
-                Dr. Kingsley{" "}
-                <span className="block">U. Aleke</span>
-              </h1>
+}, [isPortraitOpen]);
 
-              <p
-                className="hero-reveal mt-8 max-w-xl text-base leading-7 text-muted sm:text-lg sm:leading-8"
-                style={delay(200)}
-              >
-                Exploring how medicine, AI, technology, and entrepreneurship
-                can come together to solve meaningful healthcare challenges.
-              </p>
+return ( <section
+   id="home"
+   className="relative isolate flex min-h-[calc(100svh-5rem)] items-center overflow-hidden bg-background py-12 sm:py-16 lg:py-24"
+ >
+{/* Quiet background texture */} <div
+     aria-hidden="true"
+     className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+   > <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(148,163,184,0.10)_1px,transparent_1px)] [background-size:28px_28px] opacity-30" /> </div>
 
-              <div className="hero-reveal mt-10" style={delay(300)}>
-                <p className="text-sm leading-relaxed text-muted sm:text-base">
-                  Advancing healthcare through:
-                </p>
 
-                <div className="mt-2 min-h-[2.2em]">
-                  {/* screen readers get the full list once instead of every typed letter */}
-                  <span className="sr-only">
-                    Medicine, Artificial Intelligence, Healthcare Innovation,
-                    and Technology.
-                  </span>
+  <Container>
+    <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+      {/* Introduction */}
+      <div className="relative min-w-0">
+        {/* Professional identity */}
+        <div className="mb-5 flex items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="h-px w-7 shrink-0 animate-pulse bg-blue-500/50"
+          />
 
-                  <span
-                    aria-hidden="true"
-                    className="whitespace-nowrap text-[clamp(1.2rem,5vw,2.5rem)] leading-tight font-semibold tracking-tight text-accent"
-                  >
-                    {displayText}
-                    <span className="animate-caret ml-1 inline-block font-light">
-                      |
-                    </span>
-                  </span>
-                </div>
-              </div>
+          <p className="text-[10px] font-medium uppercase leading-relaxed tracking-[0.10em] text-muted-foreground min-[400px]:text-[11px] sm:text-xs sm:tracking-[0.14em]">
+            Medical Doctor
+            <span className="mx-1.5 text-muted-foreground/60 sm:mx-2">
+              ·
+            </span>
+            Software Developer
+            <span className="mx-1.5 text-muted-foreground/60 sm:mx-2">
+              ·
+            </span>
+            Entrepreneur
+          </p>
+        </div>
 
-              <div
-                className="hero-reveal mt-10 flex flex-wrap items-center gap-3 sm:gap-4"
-                style={delay(400)}
-              >
-                <Button href="#projects" variant="primary">
-                  Explore My Work <span aria-hidden="true">↗</span>
-                </Button>
+        {/* Name and subtle glow */}
+        <div className="relative isolate">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-5 -inset-y-4 -z-10 bg-[radial-gradient(ellipse_at_35%_50%,rgba(59,130,246,0.055),transparent_70%)] sm:-inset-x-8 sm:-inset-y-6"
+          />
 
-                <Button href="#contact" variant="outline">
-                  Get in Touch
-                </Button>
-              </div>
-            </div>
+          <h1 className="text-[clamp(1.8rem,6.2vw,4.5rem)] font-bold leading-[1.12] tracking-[-0.055em] text-foreground sm:whitespace-nowrap">
+            <span className="whitespace-nowrap">Dr. Kingsley</span>{" "}
+            <span className="whitespace-nowrap">
+              U. Aleke<span className="text-blue-500/70">.</span>
+            </span>
+          </h1>
+        </div>
 
-            {/* right: photo, exactly as in your original */}
-            <div className="hero-reveal-soft relative flex min-h-70 items-center justify-center sm:min-h-90 lg:min-h-120" style={delay(200)}>
-              <div
-                aria-hidden="true"
-                className="absolute h-56 w-56 rounded-full bg-accent/10 blur-3xl sm:h-72 sm:w-72 lg:h-80 lg:w-80"
-              />
+        {/* Introduction */}
+        <p className="mt-6 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base sm:leading-8">
+          I explore how medicine, artificial intelligence, and data science
+          can come together to solve meaningful healthcare challenges.
+        </p>
 
-              <div
-                aria-hidden="true"
-                className="absolute h-64 w-64 rounded-full border border-border/70 sm:h-80 sm:w-80 lg:h-96 lg:w-96"
-              />
+        {/* Animated focus areas */}
+        <div className="mt-6 min-h-[3.5rem]">
+          <p className="mb-1.5 text-xs text-muted-foreground sm:text-sm">
+            Areas of interest:
+          </p>
 
-              <div
-                aria-hidden="true"
-                className="absolute h-48 w-48 rounded-full border border-accent/15 sm:h-60 sm:w-60 lg:h-72 lg:w-72"
-              />
+          <div
+            className="flex min-h-7 items-center text-sm font-medium text-slate-500 dark:text-slate-400 sm:text-base"
+            aria-hidden="true"
+          >
+            <span>{displayText}</span>
+            <span className="ml-1 inline-block h-4 w-px animate-pulse bg-slate-400/60 dark:bg-slate-500/60" />
+          </div>
 
-              <div
-                aria-hidden="true"
-                className="absolute top-[12%] right-[15%] h-2 w-2 rounded-full bg-accent/70"
-              />
+          <p className="sr-only">
+            Areas of interest include healthcare innovation, clinical
+            decision support, medical data intelligence, and medical image
+            analysis.
+          </p>
+        </div>
 
-              <div
-                aria-hidden="true"
-                className="absolute bottom-[18%] left-[12%] h-2.5 w-2.5 rounded-full bg-accent/50"
-              />
+        {/* Actions */}
+        <div className="mt-7 flex flex-wrap items-center gap-3">
+          <Button href="#projects">Explore My Work</Button>
 
-              <button
-                ref={photoButtonRef}
-                type="button"
-                onClick={() => setIsPhotoOpen(true)}
-                aria-label="View portrait of Dr. Kingsley Udochukwu Aleke"
-                aria-haspopup="dialog"
-                className="group relative z-10 h-32 w-32 overflow-hidden rounded-full border-4 border-background shadow-xl shadow-black/10 ring-1 ring-accent/30 transition duration-300 hover:scale-105 hover:ring-4 hover:ring-accent/20 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:h-40 sm:w-40 lg:h-48 lg:w-48"
-              >
-                <Image
-                  src="/kingsley.jpeg"
-                  alt="Dr. Kingsley Udochukwu Aleke"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 192px"
-                  className="object-cover object-top transition-transform duration-500 group-hover:scale-110"
-                />
+          <Button href="#contact" variant="outline">
+            Get in Touch
+          </Button>
+        </div>
+      </div>
 
-                <span className="absolute inset-x-0 bottom-0 bg-black/55 py-2 text-center text-xs font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  View photo
-                </span>
-              </button>
+      {/* Portrait and orbital rings */}
+      <div className="relative mx-auto w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[350px]">
+        <div className="relative aspect-square w-full">
+          {/* Diffused blue radiance beyond the rings */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-12 hidden rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.13)_0%,rgba(59,130,246,0.055)_45%,transparent_72%)] opacity-80 blur-2xl motion-safe:animate-[pulse_7s_ease-in-out_infinite] lg:block"
+          />
 
-              <div
-                aria-hidden="true"
-                className="absolute top-[15%] left-0 rounded-full border border-border bg-background/90 px-3 py-2 text-xs font-medium text-muted shadow-sm backdrop-blur sm:left-[2%] sm:px-4"
-              >
+          {/* Soft ambient glow close to the portrait */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-5 hidden rounded-full bg-blue-500/[0.035] blur-xl lg:block"
+          />
+
+          {/* Outer circular ring */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-8 hidden rounded-full border border-blue-500/15 shadow-[0_0_22px_rgba(59,130,246,0.045)] lg:block"
+          />
+
+          {/* Inner dashed ring */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-4 hidden rounded-full border border-dashed border-blue-500/20 lg:block"
+          />
+
+          {/* Portrait */}
+          <button
+            type="button"
+            onClick={() => setIsPortraitOpen(true)}
+            aria-label="View an enlarged portrait of Dr. Kingsley U. Aleke"
+            className="absolute inset-0 overflow-hidden rounded-full bg-muted shadow-[0_12px_50px_rgba(0,0,0,0.10)] transition-transform duration-300 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/70 focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+          >
+            <Image
+              src="/kingsley.png"
+              alt="Portrait of Dr. Kingsley U. Aleke"
+              fill
+              priority
+              sizes="(max-width: 639px) 75vw, (max-width: 1023px) 320px, 350px"
+              className="object-cover"
+            />
+          </button>
+
+          {/* Medicine label — smaller and farther from portrait */}
+          <div className="absolute -left-5 top-[12%] -translate-x-1 sm:-left-9 lg:-left-14">
+            <div className="rounded-md border border-border/70 bg-background/95 px-2.5 py-1.5 shadow-[0_4px_18px_rgba(0,0,0,0.045)] backdrop-blur-md sm:px-3 sm:py-2">
+              <p className="text-[10px] font-semibold tracking-wide text-foreground sm:text-xs">
                 Medicine
-              </div>
-
-              <div
-                aria-hidden="true"
-                className="absolute right-0 bottom-[14%] rounded-full border border-border bg-background/90 px-3 py-2 text-xs font-medium text-muted shadow-sm backdrop-blur sm:right-[2%] sm:px-4"
-              >
-                Artificial Intelligence
-              </div>
+              </p>
+              <p className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">
+                Clinical thinking
+              </p>
             </div>
           </div>
-        </Container>
-      </section>
 
-      {isPhotoOpen && (
-        <div
-          className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-5 backdrop-blur-md sm:p-8"
-          onClick={() => setIsPhotoOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Portrait of Dr. Kingsley Udochukwu Aleke"
-            className="relative w-full max-w-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={() => setIsPhotoOpen(false)}
-              aria-label="Close portrait"
-              className="absolute -top-12 right-0 flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-2xl text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-            >
-              ×
-            </button>
-
-            <div className="relative aspect-4/5 overflow-hidden rounded-2xl border border-white/15 bg-neutral-900 shadow-2xl">
-              <Image
-                src="/kingsley.jpeg"
-                alt="Dr. Kingsley Udochukwu Aleke"
-                fill
-                sizes="(max-width: 640px) 90vw, 512px"
-                className="object-cover object-top"
-              />
-            </div>
-
-            <div className="mt-5 text-center">
-              <p className="text-lg font-semibold text-white">
-                Dr. Kingsley Udochukwu Aleke
+          {/* AI label — smaller and farther from portrait */}
+          <div className="absolute -right-5 bottom-[12%] translate-x-1 sm:-right-9 lg:-right-14">
+            <div className="rounded-md border border-border/70 bg-background/95 px-2.5 py-1.5 shadow-[0_4px_18px_rgba(0,0,0,0.045)] backdrop-blur-md sm:px-3 sm:py-2">
+              <p className="text-[10px] font-semibold tracking-wide text-foreground sm:text-xs">
+                AI & Technology
               </p>
-
-              <p className="mt-1 text-sm text-white/70">
-                Medical Graduate · Software Developer · Entrepreneur
+              <p className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">
+                Intelligent solutions
               </p>
             </div>
           </div>
         </div>
-      )}
-    </>
-  );
+      </div>
+    </div>
+  </Container>
+
+  {/* Enlarged portrait modal — original sizing preserved */}
+  {isPortraitOpen && (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm sm:p-6"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          setIsPortraitOpen(false);
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Enlarged portrait of Dr. Kingsley U. Aleke"
+    >
+      <button
+        ref={closeButtonRef}
+        type="button"
+        onClick={() => setIsPortraitOpen(false)}
+        aria-label="Close enlarged portrait"
+        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-2xl text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 sm:right-6 sm:top-6"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+
+      <div className="relative aspect-[4/5] max-h-[85svh] w-full max-w-lg overflow-hidden rounded-xl">
+        <Image
+          src="/kingsley.png"
+          alt="Enlarged portrait of Dr. Kingsley U. Aleke"
+          fill
+          priority
+          sizes="(max-width: 639px) 92vw, 512px"
+          className="object-contain"
+        />
+      </div>
+    </div>
+  )}
+</section>
+
+
+);
 }
